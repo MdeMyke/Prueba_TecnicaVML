@@ -2,8 +2,6 @@
 include '../config/database.php';
 include '../includes/header.php';
 
-// Conexión a la base de datos MySQL
-$pdo = new PDO('mysql:host=localhost;dbname=tareas_db', 'root', ''); // Asegúrate de actualizar el nombre de usuario y la contraseña
 
 // Agregar una nueva pestaña
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_tab'])) {
