@@ -4,88 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Footer con Burbujas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <style>
-        /* Eliminar márgenes y relleno de la página */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        
 
-        body {
+        /* Estilos específicos para el contenedor principal */
+        .footer-container {
             display: grid;
             grid-template-rows: 1fr 10rem auto;
             grid-template-areas: "main" "." "footer";
             overflow-x: hidden;
-            background: #F5F7FA;
-            min-height: 100vh;
+            background: rgb(255, 255, 255);
             font-family: 'Open Sans', sans-serif;
         }
 
-        .footer {
+        /* Estilos para el footer */
+        .footer-container .footer {
             z-index: 1;
-            --footer-background: #ED5565;
+            --footer-background-color: #ED5565; /* Color de fondo del footer */
             display: grid;
             position: relative;
             grid-area: footer;
             min-height: 12rem;
         }
 
-        .bubbles {
+        /* Estilos para las burbujas */
+        .footer-container .footer .footer-bubbles {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 1rem;
-            background: var(--footer-background);
-            filter: url("#blob");
+            background: var(--footer-background-color);
+            filter: url("#blob-filter");
         }
 
-        .bubble {
+        /* Estilo de cada burbuja */
+        .footer-container .footer .footer-bubbles .footer-bubble {
             position: absolute;
-            left: var(--position, 50%);
-            background: var(--footer-background);
+            left: var(--bubble-position, 50%);
+            background: var(--footer-background-color);
             border-radius: 100%;
-            animation: bubble-size var(--time, 4s) ease-in infinite var(--delay, 0s),
-                bubble-move var(--time, 4s) ease-in infinite var(--delay, 0s);
+            animation: bubble-size var(--bubble-time, 4s) ease-in infinite var(--bubble-delay, 0s),
+                      bubble-move var(--bubble-time, 4s) ease-in infinite var(--bubble-delay, 0s);
             transform: translate(-50%, 100%);
         }
 
-        .content {
+        /* Contenido dentro del footer */
+        .footer-container .footer .footer-content {
             z-index: 2;
             display: grid;
             grid-template-columns: 1fr auto;
             grid-gap: 4rem;
             padding: 2rem;
-            background: var(--footer-background);
+            background: var(--footer-background-color);
         }
 
-        a, p {
+        .footer-container .footer .footer-content a,
+        .footer-container .footer .footer-content p {
             color: #F5F7FA;
             text-decoration: none;
         }
 
-        b {
+        .footer-container .footer .footer-content b {
             color: white;
         }
 
-        p {
+        .footer-container .footer .footer-content p {
             margin: 0;
-            font-size: .75rem;
+            font-size: 0.75rem;
         }
 
-        > div {
+        .footer-container .footer .footer-content > div {
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
-        > div > div {
+        .footer-container .footer .footer-content > div > div {
             margin: 0.25rem 0;
         }
 
-        .image {
+        /* Imagen dentro del footer */
+        .footer-container .footer .footer-content .footer-image {
             align-self: center;
             width: 4rem;
             height: 4rem;
@@ -94,11 +94,11 @@
             background-position: center;
         }
 
-        /* Animaciones */
+        /* Animaciones de burbujas */
         @keyframes bubble-size {
             0%, 75% {
-                width: var(--size, 4rem);
-                height: var(--size, 4rem);
+                width: var(--bubble-size, 4rem);
+                height: var(--bubble-size, 4rem);
             }
             100% {
                 width: 0rem;
@@ -111,18 +111,15 @@
                 bottom: -4rem;
             }
             100% {
-                bottom: var(--distance, 10rem);
+                bottom: var(--bubble-distance, 10rem);
             }
         }
     </style>
 </head>
-<body>
-    <main>
-        <!-- Aquí va el contenido principal de la página -->
-    </main>
+<body1 class="footer-container">
 
     <footer class="footer">
-        <div class="bubbles">
+        <div class="footer-bubbles">
             <!-- Generación de burbujas -->
             <script>
                 for (var i = 0; i < 128; i++) {
@@ -133,36 +130,38 @@
                     var delay = -1 * (2 + Math.random() * 2);
 
                     var bubble = document.createElement("div");
-                    bubble.classList.add("bubble");
-                    bubble.style.setProperty("--size", `${size}rem`);
-                    bubble.style.setProperty("--distance", `${distance}rem`);
-                    bubble.style.setProperty("--position", `${position}%`);
-                    bubble.style.setProperty("--time", `${time}s`);
-                    bubble.style.setProperty("--delay", `${delay}s`);
-                    document.querySelector(".bubbles").appendChild(bubble);
+                    bubble.classList.add("footer-bubble");
+                    bubble.style.setProperty("--bubble-size", `${size}rem`);
+                    bubble.style.setProperty("--bubble-distance", `${distance}rem`);
+                    bubble.style.setProperty("--bubble-position", `${position}%`);
+                    bubble.style.setProperty("--bubble-time", `${time}s`);
+                    bubble.style.setProperty("--bubble-delay", `${delay}s`);
+                    document.querySelector(".footer-bubbles").appendChild(bubble);
                 }
             </script>
         </div>
 
-        <div class="content">
+        <div class="footer-content">
             <div>
                 <div>
                     <b>Desarrollador</b>
                     <a href="#">Michael Esteban Piña Guerrero</a>
-            <div>
-                <a class="image" style="background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/199011/happy.svg')"></a>
-                <p>© 2025 Preuba Tecnica</p>
+                </div>
+                <div>
+                    <p>© 2025 Prueba Técnica</p>
+                </div>
             </div>
         </div>
     </footer>
 
     <svg style="position: fixed; top: 100vh;">
         <defs>
-            <filter id="blob">
+            <filter id="blob-filter">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
                 <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="blob" />
             </filter>
         </defs>
     </svg>
-</body>
+
+</body1>
 </html>

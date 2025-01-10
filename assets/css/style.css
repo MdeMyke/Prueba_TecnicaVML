@@ -1,0 +1,225 @@
+/* Estilos generales */
+.card-custom,
+.card-custom-add {
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-custom {
+  max-width: 500px;
+}
+
+.card-custom-add {
+  margin-top: 20px;
+}
+
+/* Estilo para el campo de tarea */
+.task-input,
+input[type="date"] {
+  width: 80%;
+  height: 50px;
+  padding: 15px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 20px;
+}
+
+.task-input {
+  margin-bottom: 10px;
+}
+
+input[type="date"] {
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+input[type="date"]:focus {
+  border-color: #ff0000;
+  background-color: #f8f9fa;
+  outline: none;
+}
+
+input[type="date"]:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+input[type="date"]:valid {
+  border-color: #28a745;
+}
+
+/* Estilo para el botón de añadir tarea */
+.add-btn {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  background-color: #ff0000;
+  border-radius: 50%;
+  color: white;
+  font-size: 30px;
+  border: none;
+}
+
+/* Estilo para la lista de tareas */
+.task-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  transition: transform 0.3s ease;
+}
+
+.task-item.completed {
+  text-decoration: line-through;
+  background-color: #d1ffd6;
+}
+
+.task-item .checkbox {
+  margin-right: 10px;
+}
+
+/* Estilos para las pestañas */
+.tabs {
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-btn,
+.tab-btn1 {
+  border-radius: 20px;
+  border: 1px solid #ff0000;
+  background-color: #fff;
+  cursor: pointer;
+  flex: 1;
+}
+
+.tab-btn1 {
+  margin-left: auto;
+}
+
+.tab-btn.active {
+  background-color: #ff0000;
+  color: white;
+}
+
+/* Estilos para el menú y las opciones de tarea */
+.menu-icon {
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 18px;
+}
+
+.task-options {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.task-options.show {
+  display: block;
+}
+
+/* Estilos para la fecha actual */
+.current-date {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 16px;
+  color: #555;
+}
+
+/* Estilo para el ícono de eliminar */
+.delete-icon {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 15px;
+  color: #ff0000;
+  cursor: pointer;
+}
+
+/* Estilos para los botones de filtrado */
+.btn-group .btn {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 8px 15px;
+  border: 1px solid #ff0000;
+  background-color: white;
+  color: #ff0000;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #ff0000;
+  color: white;
+}
+
+/* Ocultar los radio buttons reales */
+input[type="radio"] {
+  display: none;
+}
+
+/* Estilo para los botones cuando están seleccionados (chuleados) */
+input[type="radio"]:checked + .btn {
+  background-color: #ff0000;
+  color: white;
+  border-color: #ff0000;
+}
+
+/* Efecto hover cuando está seleccionado */
+input[type="radio"]:checked + .btn:hover {
+  background-color: #d80000;
+}
+
+/* Estilos de responsividad */
+@media (max-width: 768px) {
+  .card-custom {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .task-input {
+    width: 80%;
+    margin-bottom: 10px;
+  }
+
+  .add-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+}
+
+/*
+Explicación de los Estilos:
+Estilos generales: Las tarjetas (.card-custom y .card-custom-add) tienen un diseño limpio con un margen, padding y sombra suave. Estas tarjetas se usan para contener el contenido, como la lista de tareas y el formulario de añadir tarea.
+Campos de entrada: Los campos de tarea y fecha (.task-input, input[type="date"]) tienen un diseño consistente, con bordes redondeados y efectos cuando están enfocados. Además, se aplica un color de borde verde cuando la fecha es válida.
+Botón de añadir tarea: El botón circular (.add-btn) está centrado en el formulario de añadir tarea, con un color de fondo rojo y un ícono dentro.
+Lista de tareas: Cada tarea está representada por un ítem (.task-item), y si está completada, se tachará con un fondo verde claro (.task-item.completed).
+Pestañas: Las pestañas se diseñan con bordes rojos y colores de fondo dinámicos dependiendo de si están activas.
+Menú de opciones: El menú de opciones de cada tarea aparece al hacer clic en el ícono de tres puntos, mostrando opciones para editar o eliminar la tarea.
+Responsividad: En pantallas más pequeñas (menor a 768px), los elementos de la interfaz se ajustan, como el tamaño del botón de añadir tarea o el ancho de los campos de entrada, para que todo sea visible y funcional.
+*/

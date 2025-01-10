@@ -1,16 +1,41 @@
-
 <?php
+
+// Comprobar si la pestaña "Principal" ya existe
+$sql_check_tab = "SELECT * FROM tabs WHERE name = 'Principal'";
+$result_check_tab = $conn->query($sql_check_tab);
+
+// Si no existe, crearla automáticamente
+if ($result_check_tab->num_rows == 0) {
+    // Crear la pestaña "Principal"
+    $sql_create_tab = "INSERT INTO tabs (name) VALUES ('Principal')";
+    if ($conn->query($sql_create_tab) === TRUE) {
+        $new_tab_id = $conn->insert_id;  // Obtener el ID de la nueva pestaña
+    } else {
+        die("Error al crear la pestaña Principal: " . $conn->error);
+    }
+} else {
+    // Si la pestaña "Principal" ya existe, obtener su ID
+    $tab = $result_check_tab->fetch_assoc();
+    $new_tab_id = $tab['id'];
+}
+
+// Obtener el ID de la pestaña activa desde la URL (si está presente), o usar la pestaña "Principal" por defecto
+$active_tab_id = isset($_GET['tab']) ? $_GET['tab'] : $new_tab_id;  // Usar el ID de "Principal" si no hay tab en la URL
+
+
 // Lógica para agregar una nueva tarea
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task'], $_POST['tab_id'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task'], $_POST['tab_id'], $_POST['due_date'])) {
     $task = $_POST['task'];
     $tab_id = $_POST['tab_id'];
+    $due_date = $_POST['due_date'];  // Obtener la fecha límite
 
     // Consulta para insertar la tarea en la base de datos
-    $sql = "INSERT INTO tasks (task, tab_id) VALUES (?, ?)";
+    $sql = "INSERT INTO tasks (task, tab_id, due_date) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $task, $tab_id);
+    $stmt->bind_param("sis", $task, $tab_id, $due_date);  // Vincular la fecha límite
     $stmt->execute();
     $stmt->close();
+
     // Redirigir con el ID de la pestaña seleccionada
     header("Location: index.php?tab=$tab_id");
     exit();
@@ -165,7 +190,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tab_id_to_delete'])) {
     exit();
 }
 
-
 // Lógica para eliminar las tareas completadas
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_completed_tasks_tab_id'])) {
     $tab_id = $_POST['delete_completed_tasks_tab_id'];
@@ -181,7 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_completed_tasks
     header("Location: index.php?tab=$tab_id");
     exit();
 }
-
 
 // Obtener el filtro (si está presente) de la URL
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all'; // Si no hay filtro, mostrar todas las tareas
@@ -200,5 +223,37 @@ $stmt_tasks->bind_param("i", $active_tab_id);
 $stmt_tasks->execute();
 $result_tasks = $stmt_tasks->get_result();
 
-
 ?>
+
+<!--
+
+Comprobación de la pestaña "Principal":
+
+Primero, se verifica si existe una pestaña llamada "Principal" en la base de datos. Si no existe, se crea automáticamente. Esto asegura que siempre haya una pestaña predeterminada disponible.
+Obtener la pestaña activa:
+
+Si la URL contiene un parámetro tab, se utiliza ese valor para determinar qué pestaña está activa. Si no hay ese parámetro, se utiliza el ID de la pestaña "Principal" como predeterminado.
+Operaciones de tareas:
+
+Agregar nueva tarea: Si se recibe una solicitud POST con los datos de una tarea, esta se inserta en la base de datos asociada a la pestaña activa.
+Crear nueva pestaña: Si se envía un nombre para una nueva pestaña a través de POST, se agrega una nueva pestaña a la base de datos y se redirige a esa pestaña.
+Actualizar tarea: Si se recibe una solicitud para marcar una tarea como completada o no completada, se actualiza el estado de la tarea en la base de datos.
+Eliminar tarea: Si se recibe una solicitud para eliminar una tarea, esta se elimina de la base de datos.
+Editar tarea: Si se recibe una solicitud para editar una tarea, se actualiza el texto de la tarea en la base de datos.
+Cálculo de progreso de tareas:
+
+Se obtiene el total de tareas y cuántas están completadas en la pestaña activa. A partir de esto, se calcula el porcentaje de tareas completadas para mostrar un progreso.
+Operaciones de eliminación de pestañas:
+
+Si se recibe una solicitud para eliminar una pestaña, primero se eliminan todas las tareas asociadas a ella y luego se elimina la pestaña en sí misma.
+Eliminar tareas completadas:
+
+Se ofrece la opción de eliminar todas las tareas completadas de una pestaña, lo cual se hace mediante una consulta que elimina aquellas tareas con el estado "completada".
+Filtrado de tareas:
+
+El sistema permite filtrar las tareas para mostrar solo las completadas, pendientes o todas. Esto se hace mediante un parámetro filter en la URL. Dependiendo del valor de este parámetro, se ejecuta una consulta diferente para obtener las tareas correspondientes.
+Recuperación de todas las pestañas:
+
+Se obtienen todas las pestañas desde la base de datos para mostrarlas en la interfaz, y se maneja la interacción con las pestañas a través de los formularios y botones.
+
+-->
