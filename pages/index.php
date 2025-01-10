@@ -1,242 +1,343 @@
 <?php
-include '../config/database.php';
-include '../includes/header.php';
+// Conexión a la base de datos
+$servername = "localhost";
+$username = "root";  // Cambia por tu usuario de la base de datos
+$password = "";      // Cambia por tu contraseña de la base de datos
+$dbname = "todo_list";  // El nombre de tu base de datos
 
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-// Agregar una nueva pestaña
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_tab'])) {
-    $new_tab = htmlspecialchars($_POST['new_tab']);
-    if (!empty($new_tab)) {
-        // Insertar la nueva pestaña en la base de datos
-        $stmt = $pdo->prepare("INSERT INTO tabs (name) VALUES (:name)");
-        $stmt->execute(['name' => $new_tab]);
-    }
+// Verifica si la conexión fue exitosa
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
 }
 
-// Agregar una nueva tarea
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_task']) && isset($_POST['current_tab'])) {
-    $current_tab = $_POST['current_tab'];
-    $new_task = htmlspecialchars($_POST['new_task']);
-    if (!empty($new_task)) {
-        // Obtener el ID de la pestaña
-        $stmt = $pdo->prepare("SELECT id FROM tabs WHERE name = :name");
-        $stmt->execute(['name' => $current_tab]);
-        $tab_id = $stmt->fetchColumn();
+// Lógica para agregar una nueva tarea
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task'], $_POST['tab_id'])) {
+    $task = $_POST['task'];
+    $tab_id = $_POST['tab_id'];
 
-        // Insertar la tarea en la base de datos
-        $stmt = $pdo->prepare("INSERT INTO tasks (task_name, tab_id) VALUES (:task_name, :tab_id)");
-        $stmt->execute(['task_name' => $new_task, 'tab_id' => $tab_id]);
-    }
+    // Consulta para insertar la tarea en la base de datos
+    $sql = "INSERT INTO tasks (task, tab_id) VALUES (?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("si", $task, $tab_id);
+    $stmt->execute();
+    $stmt->close();
+    // Redirigir con el ID de la pestaña seleccionada
+    header("Location: index.php?tab=$tab_id");  
+    exit();
 }
 
-// Editar una tarea
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_task']) && isset($_POST['current_tab']) && isset($_POST['edited_task'])) {
-    $current_tab = $_POST['current_tab'];
-    $old_task = $_POST['edit_task'];
-    $new_task = htmlspecialchars($_POST['edited_task']);
-    
-    // Actualizar la tarea en la base de datos
-    $stmt = $pdo->prepare("UPDATE tasks SET task_name = :new_task WHERE task_name = :old_task AND tab_id = (SELECT id FROM tabs WHERE name = :tab_name)");
-    $stmt->execute(['new_task' => $new_task, 'old_task' => $old_task, 'tab_name' => $current_tab]);
+// Lógica para crear una nueva pestaña
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tab_name'])) {
+    $tab_name = $_POST['tab_name'];
+
+    // Consulta para insertar la nueva pestaña en la base de datos
+    $sql = "INSERT INTO tabs (name) VALUES (?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $tab_name);
+    $stmt->execute();
+    $stmt->close();
+    // Redirigir a la página principal después de crear la pestaña
+    header("Location: index.php");  
+    exit();
 }
 
-// Eliminar una tarea
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_task']) && isset($_POST['current_tab'])) {
-    $current_tab = $_POST['current_tab'];
-    $task_to_delete = $_POST['delete_task'];
+// Lógica para actualizar el estado de la tarea (marcar como completada)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task_id'], $_POST['completed'], $_POST['tab_id'])) {
+    $task_id = $_POST['task_id'];
+    $completed = $_POST['completed'];
+    $tab_id = $_POST['tab_id'];  // Mantener la pestaña activa
 
-    // Eliminar la tarea de la base de datos
-    $stmt = $pdo->prepare("DELETE FROM tasks WHERE task_name = :task_name AND tab_id = (SELECT id FROM tabs WHERE name = :tab_name)");
-    $stmt->execute(['task_name' => $task_to_delete, 'tab_name' => $current_tab]);
+    // Actualizar el estado de la tarea en la base de datos
+    $sql = "UPDATE tasks SET completed = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $completed, $task_id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Redirigir a la misma pestaña activa
+    header("Location: index.php?tab=$tab_id");  
+    exit();
 }
 
-// Mover una tarea completada
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_task']) && isset($_POST['current_tab'])) {
-    $current_tab = $_POST['current_tab'];
-    $completed_task = $_POST['complete_task'];
+// Lógica para eliminar una tarea
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_task_id'])) {
+    $delete_task_id = $_POST['delete_task_id'];
 
-    // Marcar la tarea como completada
-    $stmt = $pdo->prepare("UPDATE tasks SET completed = 1 WHERE task_name = :task_name AND tab_id = (SELECT id FROM tabs WHERE name = :tab_name)");
-    $stmt->execute(['task_name' => $completed_task, 'tab_name' => $current_tab]);
+    // Consulta para eliminar la tarea de la base de datos
+    $sql = "DELETE FROM tasks WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $delete_task_id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Redirigir a la misma pestaña activa
+    header("Location: index.php?tab=" . $_POST['tab_id']);  
+    exit();
 }
 
-// Destachar una tarea completada
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uncomplete_task']) && isset($_POST['current_tab'])) {
-    $current_tab = $_POST['current_tab'];
-    $uncompleted_task = $_POST['uncomplete_task'];
+// Lógica para editar una tarea
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_task_id'], $_POST['edited_task'])) {
+    $edit_task_id = $_POST['edit_task_id'];
+    $edited_task = $_POST['edited_task'];
 
-    // Marcar la tarea como no completada
-    $stmt = $pdo->prepare("UPDATE tasks SET completed = 0 WHERE task_name = :task_name AND tab_id = (SELECT id FROM tabs WHERE name = :tab_name)");
-    $stmt->execute(['task_name' => $uncompleted_task, 'tab_name' => $current_tab]);
+    // Consulta para actualizar la tarea en la base de datos
+    $sql = "UPDATE tasks SET task = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("si", $edited_task, $edit_task_id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Redirigir a la misma pestaña activa
+    header("Location: index.php?tab=" . $_POST['tab_id']);  
+    exit();
 }
 
-// Eliminar todas las tareas completadas
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_completed']) && isset($_POST['current_tab'])) {
-    $current_tab = $_POST['current_tab'];
+// Obtener todas las pestañas
+$sql_tabs = "SELECT * FROM tabs";
+$result_tabs = $conn->query($sql_tabs);
 
-    // Eliminar las tareas completadas
-    $stmt = $pdo->prepare("DELETE FROM tasks WHERE completed = 1 AND tab_id = (SELECT id FROM tabs WHERE name = :tab_name)");
-    $stmt->execute(['tab_name' => $current_tab]);
-}
+// Obtener el ID de la pestaña activa desde la URL (si está presente), o usar la pestaña "Todo" por defecto
+$active_tab_id = isset($_GET['tab']) ? $_GET['tab'] : 1;  // Por defecto, "Todo" tiene ID = 1
+
+// Obtener el nombre de la pestaña activa
+$sql_active_tab_name = "SELECT name FROM tabs WHERE id = ?";
+$stmt_active_tab_name = $conn->prepare($sql_active_tab_name);
+$stmt_active_tab_name->bind_param("i", $active_tab_id);
+$stmt_active_tab_name->execute();
+$result_active_tab_name = $stmt_active_tab_name->get_result();
+$active_tab_name = $result_active_tab_name->fetch_assoc()['name'];
+$stmt_active_tab_name->close();
+
+// Obtener las tareas de la pestaña activa
+$sql_tasks = "SELECT * FROM tasks WHERE tab_id = ?";
+$stmt_tasks = $conn->prepare($sql_tasks);
+$stmt_tasks->bind_param("i", $active_tab_id);
+$stmt_tasks->execute();
+$result_tasks = $stmt_tasks->get_result();
+
+// Obtener el total de tareas y las tareas completadas para la pestaña activa
+$sql_task_counts = "SELECT COUNT(*) AS total_tasks, SUM(completed) AS completed_tasks FROM tasks WHERE tab_id = ?";
+$stmt_task_counts = $conn->prepare($sql_task_counts);
+$stmt_task_counts->bind_param("i", $active_tab_id);
+$stmt_task_counts->execute();
+$result_task_counts = $stmt_task_counts->get_result();
+$task_counts = $result_task_counts->fetch_assoc();
+$stmt_task_counts->close();
+
+// Calcular el porcentaje de tareas completadas
+$total_tasks = $task_counts['total_tasks'];
+$completed_tasks = $task_counts['completed_tasks'];
+$progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 100 : 0;
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <script src="../assets/js/main.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To Do List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card-custom {
+      width: 18rem;
+      margin: 20px;
+      padding: 20px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .task-input {
+      border-radius: 20px;
+      width: 70%;
+      padding: 10px;
+      border: 2px solid #ddd;
+    }
+    .add-btn {
+      width: 40px;
+      height: 40px;
+      background-color: #007bff;
+      border-radius: 50%;
+      color: white;
+      font-size: 24px;
+      border: none;
+    }
+    .task-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      transition: transform 0.3s ease;
+    }
+    .task-item.completed {
+      text-decoration: line-through;
+      background-color: #d1ffd6;
+    }
+    .task-item .checkbox {
+      margin-right: 10px;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 1px solid #007bff;
+      background-color: #fff;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background-color: #007bff;
+      color: white;
+    }
+    .menu-icon {
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 18px;
+    }
+    .task-options {
+      display: none;
+      position: fixed;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 1;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    .task-options.show {
+      display: block;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Mis Tareas VML</h1>
+  <div class="container mt-5">
+    <h1 class="text-center">To-Do List</h1>
 
-        <!-- Sección de pestañas -->
-        <div class="tabs">
-            <?php
-            $stmt = $pdo->query("SELECT * FROM tabs");
-            while ($tab = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                <button class="tab-button" onclick="switchTab('<?= $tab['name'] ?>')"><?= $tab['name'] ?></button>
-            <?php endwhile; ?>
-            <button class="add-tab" onclick="showAddTabForm()">+</button>
-        </div>
-
-        <!-- Formulario para agregar pestañas -->
-        <form id="add-tab-form" method="POST" style="display: none;">
-            <input type="text" name="new_tab" placeholder="Nombre de la pestaña" required>
-            <button type="submit">Agregar</button>
-        </form>
-
-        <!-- Tareas dinámicas -->
-        <div id="task-container">
-            <?php
-            $stmt = $pdo->query("SELECT * FROM tabs");
-            while ($tab = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                <div class="task-list" id="tasks-<?= $tab['name'] ?>" style="display: none;">
-                    <h2><?= $tab['name'] ?></h2>
-
-                    <!-- Formulario para agregar tareas -->
-                    <form method="POST">
-                        <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                        <input type="text" name="new_task" placeholder="Nueva tarea" required>
-                        <button type="submit">Agregar tarea</button>
-                    </form>
-
-                    <!-- Barra de progreso -->
-                    <?php
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE tab_id = :tab_id");
-                    $stmt->execute(['tab_id' => $tab['id']]);
-                    $total_tasks = $stmt->fetchColumn();
-
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE tab_id = :tab_id AND completed = 1");
-                    $stmt->execute(['tab_id' => $tab['id']]);
-                    $completed_tasks = $stmt->fetchColumn();
-
-                    $progress = $total_tasks > 0 ? ($completed_tasks / $total_tasks) * 100 : 0;
-                    ?>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: <?= $progress ?>%;"></div>
-                    </div>
-                    <p><?= round($progress, 1) ?>% de tareas completadas</p>
-
-                    <!-- Tareas pendientes -->
-                    <ul>
-                        <?php
-                        $stmt = $pdo->prepare("SELECT * FROM tasks WHERE tab_id = :tab_id AND completed = 0");
-                        $stmt->execute(['tab_id' => $tab['id']]);
-                        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($tasks as $task):
-                        ?>
-                            <li>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                                    <input type="hidden" name="complete_task" value="<?= $task['task_name'] ?>">
-                                    <input type="checkbox" onchange="this.form.submit()">
-                                    <span><?= $task['task_name'] ?></span>
-                                </form>
-                                <div class="dropdown">
-                                    <button>⋮</button>
-                                    <div class="dropdown-content">
-                                        <!-- Botón para editar -->
-                                        <form method="POST" style="margin: 0;">
-                                            <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                                            <input type="hidden" name="edit_task" value="<?= $task['task_name'] ?>">
-                                            <input type="text" name="edited_task" placeholder="Editar tarea" required>
-                                            <button type="submit">Guardar</button>
-                                        </form>
-                                        <!-- Botón para eliminar -->
-                                        <form method="POST" style="margin: 0;">
-                                            <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                                            <input type="hidden" name="delete_task" value="<?= $task['task_name'] ?>">
-                                            <button type="submit">Eliminar</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-
-                    <!-- Tareas completadas -->
-                    <h3>Tareas Completadas</h3>
-                    <ul>
-                        <?php
-                        $stmt = $pdo->prepare("SELECT * FROM tasks WHERE tab_id = :tab_id AND completed = 1");
-                        $stmt->execute(['tab_id' => $tab['id']]);
-                        $completed_tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($completed_tasks as $completed_task):
-                        ?>
-                            <li>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                                    <input type="hidden" name="uncomplete_task" value="<?= $completed_task['task_name'] ?>">
-                                    <input type="checkbox" checked onchange="this.form.submit()">
-                                    <s><?= $completed_task['task_name'] ?></s>
-                                </form>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-
-                    <!-- Botón para eliminar todas las tareas completadas -->
-                    <form method="POST">
-                        <input type="hidden" name="current_tab" value="<?= $tab['name'] ?>">
-                        <button type="submit" name="clear_completed">Eliminar tareas completadas</button>
-                    </form>
-                </div>
-            <?php endwhile; ?>
-        </div>
+    <!-- Mostrar las pestañas -->
+    <div class="tabs">
+      <?php while ($tab = $result_tabs->fetch_assoc()): ?>
+        <button class="tab-btn <?php echo ($tab['id'] == $active_tab_id) ? 'active' : ''; ?>" 
+                onclick="window.location.href='index.php?tab=<?php echo $tab['id']; ?>'">
+          <?php echo $tab['name']; ?>
+        </button>
+      <?php endwhile; ?>
+      <button class="tab-btn" id="new-tab-btn">Crear Nueva Pestaña</button>
     </div>
 
-    <script>
-        // Muestra el formulario para agregar pestañas
-        function showAddTabForm() {
-            document.getElementById('add-tab-form').style.display = 'block';
-        }
+    <!-- Barra de progreso de tareas completadas -->
+    <div class="progress mb-3">
+      <div class="progress-bar" role="progressbar" style="width: <?php echo $progress_percentage; ?>%;" aria-valuenow="<?php echo $progress_percentage; ?>" aria-valuemin="0" aria-valuemax="100">
+        <?php echo round($progress_percentage); ?>% Tareas Completadas
+      </div>
+    </div>
 
-        // Cambia entre pestañas
-        function switchTab(tabName) {
-            const taskLists = document.querySelectorAll('.task-list');
-            taskLists.forEach(taskList => taskList.style.display = 'none');
+    <!-- Formulario para agregar tarea -->
+    <form action="index.php" method="POST" class="card card-custom">
+      <h5 class="card-title">Añadir nueva tarea</h5>
+      <div class="input-group">
+        <input type="text" name="task" class="task-input" placeholder="Escribe una nueva tarea..." required>
+        <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>">
+        <button type="submit" class="add-btn">+</button>
+      </div>
+    </form>
 
-            // Guardar la pestaña seleccionada en localStorage
-            localStorage.setItem('selectedTab', tabName);
+    <!-- Lista de tareas -->
+    <div id="task-list-container">
+      <h5>Tareas en la pestaña "<?php echo htmlspecialchars($active_tab_name); ?>"</h5>
+      <ul class="task-list">
+        <?php while ($task = $result_tasks->fetch_assoc()): ?>
+          <li class="task-item <?php echo ($task['completed'] == 1) ? 'completed' : ''; ?>">
+            <form action="index.php" method="POST" style="display:inline;">
+              <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+              <input type="hidden" name="completed" value="<?php echo ($task['completed'] == 1) ? 0 : 1; ?>">
+              <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>"> <!-- Mantener el tab_id -->
+              <input type="checkbox" class="checkbox" onchange="this.form.submit()" <?php echo ($task['completed'] == 1) ? 'checked' : ''; ?>>
+            </form>
+            <?php echo $task['task']; ?>
+            <small class="text-muted"><?php echo date("d/m/Y H:i", strtotime($task['created_at'])); ?></small>
 
-            document.getElementById('tasks-' + tabName).style.display = 'block';
-        }
+            <!-- Icono de tres puntos -->
+            <span class="menu-icon">...</span>
 
-        // Al cargar la página, selecciona la última pestaña visitada
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectedTab = localStorage.getItem('selectedTab');
-            if (selectedTab) {
-                switchTab(selectedTab);
-            } else {
-                const firstTab = document.querySelector('.tab-button');
-                if (firstTab) {
-                    switchTab(firstTab.innerText);
-                }
-            }
+            <!-- Opciones de tarea -->
+            <div class="task-options">
+              <form action="index.php" method="POST">
+                <input type="hidden" name="edit_task_id" value="<?php echo $task['id']; ?>">
+                <input type="text" name="edited_task" value="<?php echo $task['task']; ?>" required>
+                <button type="submit" class="btn btn-sm btn-warning mt-2">Editar</button>
+              </form>
+              <form action="index.php" method="POST">
+                <input type="hidden" name="delete_task_id" value="<?php echo $task['id']; ?>">
+                <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>">
+                <button type="submit" class="btn btn-sm btn-danger mt-2">Eliminar</button>
+              </form>
+            </div>
+          </li>
+        <?php endwhile; ?>
+      </ul>
+    </div>
+
+    <!-- Formulario para crear nueva pestaña -->
+    <div id="new-tab-form" style="display:none;">
+      <form action="index.php" method="POST">
+        <input type="text" name="tab_name" class="task-input" placeholder="Nombre de la nueva pestaña" required>
+        <button type="submit" class="btn btn-primary mt-2">Crear Pestaña</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Obtener todos los iconos de tres puntos
+    const menuIcons = document.querySelectorAll('.menu-icon');
+    
+    // Mostrar el menú de opciones al hacer clic en el icono de tres puntos
+    menuIcons.forEach(icon => {
+      icon.addEventListener('click', function(event) {
+        // Prevenir que el clic se propague
+        event.stopPropagation();
+        
+        // Obtener el menú de opciones relacionado
+        const menu = this.nextElementSibling;
+        
+        // Alternar la visibilidad del menú
+        menu.classList.toggle('show');
+        
+        // Cerrar cualquier otro menú abierto
+        document.querySelectorAll('.task-options').forEach(option => {
+          if (option !== menu) {
+            option.classList.remove('show');
+          }
         });
-    </script>
+      });
+    });
+
+    // Prevenir que el clic en el menú de opciones se propague (para evitar que se cierre)
+    const taskOptionsForms = document.querySelectorAll('.task-options form');
+    taskOptionsForms.forEach(form => {
+        form.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevenir el cierre del menú cuando se haga clic en las opciones
+        });
+    });
+
+    // Cerrar el menú de opciones si se hace clic fuera de él
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.task-options').forEach(menu => {
+        menu.classList.remove('show');
+      });
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

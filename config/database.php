@@ -1,13 +1,12 @@
 <?php
-$dbHost = 'localhost';
-$dbName = 'tareas_db';
-$dbUser = 'root';  
-$dbPass = '';  
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "todo_list";
 
-try {
-    $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName", $dbUser, $dbPass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Error: " . $e->getMessage());
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
 }
 ?>
