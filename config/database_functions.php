@@ -183,4 +183,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_completed_tasks
 }
 
 
+// Obtener el filtro (si está presente) de la URL
+$filter = isset($_GET['filter']) ? $_GET['filter'] : 'all'; // Si no hay filtro, mostrar todas las tareas
+
+// Lógica para obtener las tareas filtradas
+if ($filter == 'completed') {
+    $sql_tasks = "SELECT * FROM tasks WHERE tab_id = ? AND completed = 1";
+} elseif ($filter == 'pending') {
+    $sql_tasks = "SELECT * FROM tasks WHERE tab_id = ? AND completed = 0";
+} else {
+    $sql_tasks = "SELECT * FROM tasks WHERE tab_id = ?";
+}
+
+$stmt_tasks = $conn->prepare($sql_tasks);
+$stmt_tasks->bind_param("i", $active_tab_id);
+$stmt_tasks->execute();
+$result_tasks = $stmt_tasks->get_result();
+
+
 ?>

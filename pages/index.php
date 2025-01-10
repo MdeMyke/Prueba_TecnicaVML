@@ -137,6 +137,47 @@ include '../config/database_functions.php'
   }
 }
 
+/* Estilo para los botones */
+.btn-group .btn {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  padding: 8px 15px;
+  border: 1px solid #ff0000;  /* Borde rojo */
+  background-color: white; /* Fondo blanco */
+  color: #ff0000; /* Texto rojo */
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Estilo para los botones cuando el mouse pasa por encima */
+.btn-outline-secondary:hover {
+  background-color: #ff0000; /* Fondo rojo */
+  color: white; /* Texto blanco */
+}
+
+/* Ocultar los radio buttons reales */
+input[type="radio"] {
+  display: none;
+}
+
+/* Estilo para los botones cuando están seleccionados (chuleados) */
+input[type="radio"]:checked + .btn {
+  background-color: #ff0000; /* Fondo rojo cuando está seleccionado */
+  color: white; /* Texto blanco */
+  border-color: #ff0000; /* Borde rojo */
+}
+
+/* Efecto hover cuando está seleccionado */
+input[type="radio"]:checked + .btn:hover {
+  background-color: #d80000; /* Un tono de rojo más oscuro en hover */
+}
+
+/* Ajuste de margen para la casilla del radio */
+.mr-2 {
+  margin-right: 8px;
+}
+
+
   </style>
 </head>
 <body>  
@@ -160,6 +201,8 @@ include '../config/database_functions.php'
               <?php echo $tab['name']; ?>
             </button>
           <?php endwhile; ?>
+
+        
 
           <!-- Icono para abrir el modal de nueva pestaña -->
           <button class="tab-btn1" id="new-tab-btn" data-bs-toggle="modal" data-bs-target="#newTabModal">
@@ -189,9 +232,26 @@ include '../config/database_functions.php'
           </div>
         </form>
 
+        <div class="d-flex justify-content-between align-items-center mb-3">
+  <!-- Texto Filtrar Por -->
+  <label for="taskFilter" class="mr-3">Filtrar Por:</label>
+
+  <!-- Casillas de selección para Filtrar -->
+  <div class="btn-group" role="group" aria-label="Filtros de tareas">
+    <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='index.php?tab=<?php echo $active_tab_id; ?>&filter=completed'">
+      <input type="radio" name="filter" value="completed" class="mr-2">Completadas
+    </button>
+    <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='index.php?tab=<?php echo $active_tab_id; ?>&filter=pending'">
+      <input type="radio" name="filter" value="pending" class="mr-2">Pendientes
+    </button>
+  </div>
+</div>
+
+
+
         <!-- Lista de tareas -->
         <div id="task-list-container">
-          <h5>Tareas en la pestaña "<?php echo htmlspecialchars($active_tab_name); ?>"</h5>
+          <h5> Tus tareas en"<?php echo htmlspecialchars($active_tab_name); ?>"</h5>
           <ul class="task-list">
             <?php while ($task = $result_tasks->fetch_assoc()): ?>
               <li class="task-item <?php echo ($task['completed'] == 1) ? 'completed' : ''; ?>">
@@ -203,6 +263,7 @@ include '../config/database_functions.php'
                 </form>
                 <?php echo $task['task']; ?>
                 <small class="text-muted"><?php echo date("d/m/Y H:i", strtotime($task['created_at'])); ?></small>
+
 
                 <!-- Icono de tres puntos para menú de opciones -->
                 <span class="menu-icon" onclick="toggleTaskOptions(<?php echo $task['id']; ?>)">...</span>
