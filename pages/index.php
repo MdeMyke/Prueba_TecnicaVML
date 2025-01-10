@@ -1,32 +1,5 @@
 <?php
-// Conexión a la base de datos
-$servername = "localhost";
-$username = "root";  // Cambia por tu usuario de la base de datos
-$password = "";      // Cambia por tu contraseña de la base de datos
-$dbname = "todo_list";  // El nombre de tu base de datos
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Verifica si la conexión fue exitosa
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
-}
-
-// Lógica para agregar una nueva tarea
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task'], $_POST['tab_id'])) {
-    $task = $_POST['task'];
-    $tab_id = $_POST['tab_id'];
-
-    // Consulta para insertar la tarea en la base de datos
-    $sql = "INSERT INTO tasks (task, tab_id) VALUES (?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $task, $tab_id);
-    $stmt->execute();
-    $stmt->close();
-    // Redirigir con el ID de la pestaña seleccionada
-    header("Location: index.php?tab=$tab_id");  
-    exit();
-}
+include '../config/db.php';
 
 // Lógica para crear una nueva pestaña
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tab_name'])) {
@@ -38,8 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tab_name'])) {
     $stmt->bind_param("s", $tab_name);
     $stmt->execute();
     $stmt->close();
-    // Redirigir a la página principal después de crear la pestaña
-    header("Location: index.php");  
+    $new_tab_id = $conn->insert_id;  // ID generado por la inserción
+
+    // Redirigir a la nueva pestaña
+    header("Location: index.php?tab=" . $new_tab_id);
     exit();
 }
 
@@ -57,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['task_id'], $_POST['com
     $stmt->close();
 
     // Redirigir a la misma pestaña activa
-    header("Location: index.php?tab=$tab_id");  
+    header("Location: index.php?tab=$tab_id");
     exit();
 }
 
@@ -73,14 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_task_id'])) {
     $stmt->close();
 
     // Redirigir a la misma pestaña activa
-    header("Location: index.php?tab=" . $_POST['tab_id']);  
+    header("Location: index.php?tab=" . $_POST['tab_id']);
     exit();
 }
 
 // Lógica para editar una tarea
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_task_id'], $_POST['edited_task'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_task_id'], $_POST['edited_task'], $_POST['tab_id'])) {
     $edit_task_id = $_POST['edit_task_id'];
     $edited_task = $_POST['edited_task'];
+    $tab_id = $_POST['tab_id'];  // Obtener el tab_id correctamente
 
     // Consulta para actualizar la tarea en la base de datos
     $sql = "UPDATE tasks SET task = ? WHERE id = ?";
@@ -90,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_task_id'], $_POST
     $stmt->close();
 
     // Redirigir a la misma pestaña activa
-    header("Location: index.php?tab=" . $_POST['tab_id']);  
+    header("Location: index.php?tab=" . $tab_id);
     exit();
 }
 
@@ -138,6 +114,7 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To Do List</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
     .card-custom {
       width: 18rem;
@@ -203,21 +180,23 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
       font-size: 18px;
     }
     .task-options {
-      display: none;
-      position: fixed;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 5px;
-      z-index: 1;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    }
-    .task-options.show {
-      display: block;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
+  display: none;
+  position: fixed; /* Usamos fixed para posicionarlo en relación con la ventana del navegador */
+  top: 50%; /* Coloca el menú a la mitad de la pantalla */
+  left: 50%; /* Coloca el menú a la mitad de la pantalla */
+  transform: translate(-50%, -50%); /* Ajusta para centrarlo completamente */
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.task-options.show {
+  display: block;
+}
+
   </style>
 </head>
 <body>
@@ -232,7 +211,11 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
           <?php echo $tab['name']; ?>
         </button>
       <?php endwhile; ?>
-      <button class="tab-btn" id="new-tab-btn">Crear Nueva Pestaña</button>
+
+      <!-- Icono para abrir el modal de nueva pestaña -->
+      <button class="tab-btn" id="new-tab-btn" data-bs-toggle="modal" data-bs-target="#newTabModal">
+        <i class="fas fa-folder"></i> <!-- Icono de carpeta -->
+      </button>
     </div>
 
     <!-- Barra de progreso de tareas completadas -->
@@ -243,14 +226,7 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
     </div>
 
     <!-- Formulario para agregar tarea -->
-    <form action="index.php" method="POST" class="card card-custom">
-      <h5 class="card-title">Añadir nueva tarea</h5>
-      <div class="input-group">
-        <input type="text" name="task" class="task-input" placeholder="Escribe una nueva tarea..." required>
-        <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>">
-        <button type="submit" class="add-btn">+</button>
-      </div>
-    </form>
+    <?php include '../includes/add_task.php'; ?>
 
     <!-- Lista de tareas -->
     <div id="task-list-container">
@@ -267,19 +243,20 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
             <?php echo $task['task']; ?>
             <small class="text-muted"><?php echo date("d/m/Y H:i", strtotime($task['created_at'])); ?></small>
 
-            <!-- Icono de tres puntos -->
-            <span class="menu-icon">...</span>
+            <!-- Icono de tres puntos para menú de opciones -->
+            <span class="menu-icon" onclick="toggleTaskOptions(<?php echo $task['id']; ?>)">...</span>
 
             <!-- Opciones de tarea -->
-            <div class="task-options">
+            <div class="task-options" id="task-options-<?php echo $task['id']; ?>">
               <form action="index.php" method="POST">
+                <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>">
                 <input type="hidden" name="edit_task_id" value="<?php echo $task['id']; ?>">
                 <input type="text" name="edited_task" value="<?php echo $task['task']; ?>" required>
                 <button type="submit" class="btn btn-sm btn-warning mt-2">Editar</button>
               </form>
               <form action="index.php" method="POST">
                 <input type="hidden" name="delete_task_id" value="<?php echo $task['id']; ?>">
-                <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>">
+                <input type="hidden" name="tab_id" value="<?php echo $active_tab_id; ?>"> <!-- Mantener el tab_id -->
                 <button type="submit" class="btn btn-sm btn-danger mt-2">Eliminar</button>
               </form>
             </div>
@@ -288,56 +265,33 @@ $progress_percentage = ($total_tasks > 0) ? ($completed_tasks / $total_tasks) * 
       </ul>
     </div>
 
-    <!-- Formulario para crear nueva pestaña -->
-    <div id="new-tab-form" style="display:none;">
-      <form action="index.php" method="POST">
-        <input type="text" name="tab_name" class="task-input" placeholder="Nombre de la nueva pestaña" required>
-        <button type="submit" class="btn btn-primary mt-2">Crear Pestaña</button>
-      </form>
+    <!-- Modal para crear nueva pestaña -->
+    <div class="modal fade" id="newTabModal" tabindex="-1" aria-labelledby="newTabModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="newTabModalLabel">Crear nueva pestaña</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form action="index.php" method="POST">
+              <input type="text" name="tab_name" class="task-input" placeholder="Nombre de la nueva pestaña" required>
+              <button type="submit" class="btn btn-primary mt-2">Crear Pestaña</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 
-  <script>
-    // Obtener todos los iconos de tres puntos
-    const menuIcons = document.querySelectorAll('.menu-icon');
-    
-    // Mostrar el menú de opciones al hacer clic en el icono de tres puntos
-    menuIcons.forEach(icon => {
-      icon.addEventListener('click', function(event) {
-        // Prevenir que el clic se propague
-        event.stopPropagation();
-        
-        // Obtener el menú de opciones relacionado
-        const menu = this.nextElementSibling;
-        
-        // Alternar la visibilidad del menú
-        menu.classList.toggle('show');
-        
-        // Cerrar cualquier otro menú abierto
-        document.querySelectorAll('.task-options').forEach(option => {
-          if (option !== menu) {
-            option.classList.remove('show');
-          }
-        });
-      });
-    });
-
-    // Prevenir que el clic en el menú de opciones se propague (para evitar que se cierre)
-    const taskOptionsForms = document.querySelectorAll('.task-options form');
-    taskOptionsForms.forEach(form => {
-        form.addEventListener('click', function(event) {
-            event.stopPropagation(); // Prevenir el cierre del menú cuando se haga clic en las opciones
-        });
-    });
-
-    // Cerrar el menú de opciones si se hace clic fuera de él
-    document.addEventListener('click', function() {
-      document.querySelectorAll('.task-options').forEach(menu => {
-        menu.classList.remove('show');
-      });
-    });
-  </script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Función para mostrar u ocultar el menú de opciones de la tarea
+    function toggleTaskOptions(taskId) {
+      var taskOptions = document.getElementById('task-options-' + taskId);
+      taskOptions.classList.toggle('show');
+    }
+  </script>
 </body>
 </html>
