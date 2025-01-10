@@ -12,122 +12,131 @@ include '../config/database_functions.php'
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
     .card-custom {
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 20px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .card-custom-add {
-      margin: 20px auto;
-      padding: 20px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .task-input {
-      border-radius: 20px;
-      width: 80%;  /* Ocupa todo el ancho disponible */
-      height: 50px;
-      padding: 15px;
-      border: 2px solid #ddd;
-      font-size: 16px;
-    }
-    .add-btn {
-      width: 50px;
-      height: 50px;
-      background-color: #007bff;
-      border-radius: 50%;
-      color: white;
-      font-size: 30px;
-      border: none;
-    }
-    .task-list {
-      list-style-type: none;
-      padding-left: 0;
-    }
-    .task-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px;
-      margin-bottom: 10px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
-      transition: transform 0.3s ease;
-    }
-    .task-item.completed {
-      text-decoration: line-through;
-      background-color: #d1ffd6;
-    }
-    .task-item .checkbox {
-      margin-right: 10px;
-    }
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      border-radius: 20px;
-      border: 1px solid #007bff;
-      background-color: #fff;
-      cursor: pointer;
-      flex: 1;
-      margin-right: auto;
-    }
-    .tab-btn1 {
-      border-radius: 20px;
-      border: 1px solid #007bff;
-      background-color: #fff;
-      cursor: pointer;
-      margin-left: auto;
-    }
-    .tab-btn.active {
-      background-color: #007bff;
-      color: white;
-    }
-    .menu-icon {
-      cursor: pointer;
-      margin-left: 10px;
-      font-size: 18px;
-    }
-    .task-options {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #fff;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 5px;
-      z-index: 1;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    }
-    .task-options.show {
-      display: block;
-    }
-    .current-date {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      font-size: 16px;
-      color: #555;
-    }
-    @media (max-width: 768px) {
-      .card-custom {
-        width: 100%;
-        padding: 10px;
-      }
-      .task-input {
-        width: 80%;
-        margin-bottom: 10px;
-      }
-      .add-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-      }
-    }
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.card-custom-add {
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.task-input {
+  border-radius: 20px;
+  width: 80%;  
+  height: 50px;
+  padding: 15px;
+  border: 2px solid #ddd;
+  font-size: 16px;
+}
+.add-btn {
+  width: 50px;
+  height: 50px;
+  background-color: #ff0000;  /* Cambiado a rojo */
+  border-radius: 50%;
+  color: white;
+  font-size: 30px;
+  border: none;
+}
+.task-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  transition: transform 0.3s ease;
+}
+.task-item.completed {
+  text-decoration: line-through;
+  background-color: #d1ffd6;
+}
+.task-item .checkbox {
+  margin-right: 10px;
+}
+.tabs {
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  border-radius: 20px;
+  border: 1px solid #ff0000;  /* Cambiado a rojo */
+  background-color: #fff;
+  cursor: pointer;
+  flex: 1;
+  margin 10px;
+}
+.tab-btn1 {
+  border-radius: 20px;
+  border: 1px solid #ff0000;  /* Cambiado a rojo */
+  background-color: #fff;
+  cursor: pointer;
+  margin-left: auto;
+}
+.tab-btn.active {
+  background-color: #ff0000;  /* Cambiado a rojo */
+  color: white;
+}
+.menu-icon {
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 18px;
+}
+.task-options {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 1;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+.task-options.show {
+  display: block;
+}
+.current-date {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 16px;
+  color: #555;
+}
+.delete-icon {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 15px;
+  color: #ff0000;  /* Cambiado a rojo */
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .card-custom {
+    width: 100%;
+    padding: 10px;
+  }
+  .task-input {
+    width: 80%;
+    margin-bottom: 10px;
+  }
+  .add-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+}
+
   </style>
 </head>
 <body>  
@@ -216,9 +225,8 @@ include '../config/database_functions.php'
             <?php endwhile; ?>
           </ul>
         </div>
-
-        <!-- Modal para crear nueva pestaña -->
-        <div class="modal fade" id="newTabModal" tabindex="-1" aria-labelledby="newTabModalLabel" aria-hidden="true">
+                <!-- Modal para crear nueva pestaña -->
+                <div class="modal fade" id="newTabModal" tabindex="-1" aria-labelledby="newTabModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -235,8 +243,8 @@ include '../config/database_functions.php'
           </div>
         </div>
 
-        <!-- Modal para eliminar pestaña -->
-        <div class="modal fade" id="deleteTabModal" tabindex="-1" aria-labelledby="deleteTabModalLabel" aria-hidden="true">
+                <!-- Modal para eliminar pestaña -->
+                <div class="modal fade" id="deleteTabModal" tabindex="-1" aria-labelledby="deleteTabModalLabel" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -257,6 +265,33 @@ include '../config/database_functions.php'
             </div>
           </div>
         </div>
+
+        <!-- Modal de confirmación para eliminar tareas completadas -->
+        <div class="modal fade" id="deleteCompletedTasksModal" tabindex="-1" aria-labelledby="deleteCompletedTasksModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteCompletedTasksModalLabel">Eliminar tareas completadas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar todas las tareas completadas en esta pestaña?</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="index.php" method="POST">
+                  <input type="hidden" name="delete_completed_tasks_tab_id" value="<?php echo $active_tab_id; ?>">
+                  <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+           <!-- Icono de la caneca dentro de la card -->
+    <span class="delete-icon" data-bs-toggle="modal" data-bs-target="#deleteCompletedTasksModal">
+      <i class="fas fa-trash-alt"></i>
+    </span>
 
       </div>
     </div>
@@ -280,6 +315,10 @@ include '../config/database_functions.php'
       day: 'numeric',
     });
     dateElement.textContent = formattedDate;
+
+    
   </script>
 </body>
 </html>
+
+

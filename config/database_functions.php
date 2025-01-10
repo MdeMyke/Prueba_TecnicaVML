@@ -165,4 +165,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tab_id_to_delete'])) {
     exit();
 }
 
+
+// Lógica para eliminar las tareas completadas
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_completed_tasks_tab_id'])) {
+    $tab_id = $_POST['delete_completed_tasks_tab_id'];
+
+    // Consulta para eliminar todas las tareas completadas de la pestaña activa
+    $sql_delete_completed_tasks = "DELETE FROM tasks WHERE tab_id = ? AND completed = 1";
+    $stmt_delete_completed_tasks = $conn->prepare($sql_delete_completed_tasks);
+    $stmt_delete_completed_tasks->bind_param("i", $tab_id);
+    $stmt_delete_completed_tasks->execute();
+    $stmt_delete_completed_tasks->close();
+
+    // Redirigir a la misma pestaña activa para ver los cambios
+    header("Location: index.php?tab=$tab_id");
+    exit();
+}
+
+
 ?>
